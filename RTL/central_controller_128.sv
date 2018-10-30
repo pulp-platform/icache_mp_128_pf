@@ -56,6 +56,7 @@ module central_controller_128
     parameter  SCM_TAG_WIDTH  = 6,
     parameter  SCM_DATA_WIDTH = 128,
     parameter  NB_BANKS       = 4,
+    localparam BANK_IDX_WIDTH = NB_BANKS > 1 ? $clog2(NB_BANKS) : 1,
     parameter  NB_WAYS        = 4,
     parameter  NB_CORES       = 8,
 
@@ -116,14 +117,14 @@ module central_controller_128
 
    output logic                                        SCM_TAG_write_req_o,   
    output logic [SCM_ADDR_WIDTH-1:0]                   SCM_TAG_write_addr_o,
-   output logic [$clog2(NB_BANKS)-1:0]                 SCM_TAG_write_dest_o,
+   output logic [BANK_IDX_WIDTH-1:0]                   SCM_TAG_write_dest_o,
    output logic [SCM_TAG_WIDTH-1:0]                    SCM_TAG_write_wdata_o,
    output logic [NB_WAYS-1:0]                          SCM_TAG_write_way_o,  
 
    // interface with WRITE PORT --> SCM Unified PORT
    output logic                                        SCM_DATA_write_req_o,   
    output logic [SCM_ADDR_WIDTH-1:0]                   SCM_DATA_write_addr_o,    // DATA SCM has double number of rows
-   output logic [$clog2(NB_BANKS)-1:0]                 SCM_DATA_write_dest_o,
+   output logic [BANK_IDX_WIDTH-1:0]                   SCM_DATA_write_dest_o,
    output logic [SCM_DATA_WIDTH-1:0]                   SCM_DATA_write_wdata_o, 
    output logic [NB_WAYS-1:0]                          SCM_DATA_write_way_o  
 
@@ -217,7 +218,9 @@ module central_controller_128
                // Flush the cache lines with that SET ID --> sel_flush_addr_i[ID_MSB:ID_LSB];
                SCM_TAG_write_req_o    = 1'b1;
                SCM_TAG_write_addr_o   = sel_flush_addr_i[ID_MSB:ID_LSB];
-               SCM_TAG_write_dest_o   = sel_flush_addr_i[DEST_MSB:DEST_LSB];
+               if (NB_BANKS > 1) begin
+                  SCM_TAG_write_dest_o= sel_flush_addr_i[DEST_MSB:DEST_LSB];
+               end
                SCM_TAG_write_wdata_o  = '0;
                SCM_TAG_write_way_o    = '1;
                cache_bypassed_o       = 1'b0;
@@ -239,7 +242,9 @@ module central_controller_128
                 // Invalidate all cache Lines
                 SCM_TAG_write_req_o    = 1'b1;
                 SCM_TAG_write_addr_o   = counter_CS[SCM_ADDR_WIDTH-1:0];
-                SCM_TAG_write_dest_o   = counter_CS[$clog2(NB_BANKS)+SCM_ADDR_WIDTH-1:SCM_ADDR_WIDTH];
+                if (NB_BANKS > 1) begin
+                   SCM_TAG_write_dest_o= counter_CS[$clog2(NB_BANKS)+SCM_ADDR_WIDTH-1:SCM_ADDR_WIDTH];
+                end
                 SCM_TAG_write_wdata_o  = '0;
                 SCM_TAG_write_way_o    = '1;
                 cache_bypassed_o       = 1'b1;
@@ -345,12 +350,16 @@ module central_controller_128
                // Handle teh Backwrite of the refill in the SCM banks
                SCM_DATA_write_way_o           = CAM_refill_way;
                SCM_DATA_write_addr_o          = CAM_refill_addr[ID_MSB:ID_LSB];
-               SCM_DATA_write_dest_o          = CAM_refill_addr[DEST_MSB:DEST_LSB] ;
+               if (NB_BANKS > 1) begin
+                  SCM_DATA_write_dest_o       = CAM_refill_addr[DEST_MSB:DEST_LSB] ;
+               end
                SCM_DATA_write_wdata_o         = AXI_rdata_i;
 
                SCM_TAG_write_way_o            = CAM_refill_way;
                SCM_TAG_write_addr_o           = CAM_refill_addr[ID_MSB:ID_LSB];
-               SCM_TAG_write_dest_o           = CAM_refill_addr[DEST_MSB:DEST_LSB];
+               if (NB_BANKS > 1) begin
+                  SCM_TAG_write_dest_o        = CAM_refill_addr[DEST_MSB:DEST_LSB];
+               end
 
                if(AXI_rvalid_i)
                begin
@@ -377,12 +386,16 @@ module central_controller_128
                // Handle teh Backwrite of the refill in the SCM banks
                SCM_DATA_write_way_o           = CAM_refill_way;
                SCM_DATA_write_addr_o          = CAM_refill_addr[ID_MSB:ID_LSB];
-               SCM_DATA_write_dest_o          = CAM_refill_addr[DEST_MSB:DEST_LSB] ;
+               if (NB_BANKS > 1) begin
+                  SCM_DATA_write_dest_o       = CAM_refill_addr[DEST_MSB:DEST_LSB] ;
+               end
                SCM_DATA_write_wdata_o         = AXI_rdata_i;
 
                SCM_TAG_write_way_o            = CAM_refill_way;
                SCM_TAG_write_addr_o           = CAM_refill_addr[ID_MSB:ID_LSB];
-               SCM_TAG_write_dest_o           = CAM_refill_addr[DEST_MSB:DEST_LSB];
+               if (NB_BANKS > 1) begin
+                  SCM_TAG_write_dest_o        = CAM_refill_addr[DEST_MSB:DEST_LSB];
+               end
 
                 if(AXI_rvalid_i)
                 begin

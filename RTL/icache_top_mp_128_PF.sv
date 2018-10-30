@@ -176,14 +176,22 @@ module icache_top_mp_128_PF
    // interface with WRITE PORT --> TAG SCM UNIFIED
    logic                                                                   SCM_TAG_write_req_int;
    logic [SCM_TAG_ADDR_WIDTH-1:0]                                          SCM_TAG_write_addr_int;
-   logic [$clog2(NB_BANKS)-1:0]                                            SCM_TAG_write_dest_int;
+   if (NB_BANKS > 1) begin
+      logic [$clog2(NB_BANKS)-1:0]                                         SCM_TAG_write_dest_int;
+   end else begin
+      logic                                                                SCM_TAG_write_dest_int;
+   end
    logic [TAG_WIDTH-1:0]                                                   SCM_TAG_write_wdata_int;
    logic [NB_WAYS-1:0]                                                     SCM_TAG_write_way_int;
 
    // interface with WRITE PORT --> DATA SCM UNIFIED
    logic                                                                   SCM_DATA_write_req_int;
    logic [SCM_DATA_ADDR_WIDTH-1:0]                                         SCM_DATA_write_addr_int;
-   logic [$clog2(NB_BANKS)-1:0]                                            SCM_DATA_write_dest_int;
+   if (NB_BANKS > 1) begin
+      logic [$clog2(NB_BANKS)-1:0]                                         SCM_DATA_write_dest_int;
+   end else begin
+      logic                                                                SCM_DATA_write_dest_int;
+   end
    logic [FETCH_DATA_WIDTH-1:0]                                            SCM_DATA_write_wdata_int;
    logic [NB_WAYS-1:0]                                                     SCM_DATA_write_way_int;
 

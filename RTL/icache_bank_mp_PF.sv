@@ -118,7 +118,9 @@ module icache_bank_mp_128_PF
    logic                                           clear_pipe;
    logic                                           enable_pipe;
 
-   logic [$clog2(NB_BANKS)-1:0]                    fetch_dest_Q;         //Target BANK
+   if (NB_BANKS > 1) begin
+      logic [$clog2(NB_BANKS)-1:0]                 fetch_dest_Q;         //Target BANK
+   end
    logic [NB_WAYS-1:0][SCM_TAG_WIDTH-1:0]          TAG_read_rdata_int;
 
    logic [NB_WAYS-1:0]                             way_match;
@@ -193,8 +195,12 @@ module icache_bank_mp_128_PF
 
 
 
-   assign fetch_dest_Q        = fetch_addr_Q[$clog2(NB_BANKS)+OFFSET-1:OFFSET];
-   assign TAG_read_rdata_int  = TAG_read_rdata_i[fetch_dest_Q]  ;
+   if (NB_BANKS > 1) begin
+      assign fetch_dest_Q        = fetch_addr_Q[$clog2(NB_BANKS)+OFFSET-1:OFFSET];
+      assign TAG_read_rdata_int  = TAG_read_rdata_i[fetch_dest_Q]  ;
+   end else begin
+      assign TAG_read_rdata_int  = TAG_read_rdata_i;
+   end
 
       
 
@@ -370,7 +376,11 @@ begin : Comb_logic_FSM
               
             
             //Read the DATA nd TAG
-            TAG_read_req_o[fetch_addr_i[$clog2(NB_BANKS)-1+4:4]]  = fetch_req_i;
+            if (NB_BANKS > 1) begin
+               TAG_read_req_o[fetch_addr_i[$clog2(NB_BANKS)-1+4:4]] = fetch_req_i;
+            end else begin
+               TAG_read_req_o = fetch_req_i;
+            end
             TAG_read_addr_o = fetch_addr_i[SET_ID_MSB:SET_ID_LSB];
 
             if(fetch_req_Q)

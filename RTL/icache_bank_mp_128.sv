@@ -136,7 +136,9 @@ module icache_bank_mp_128
    logic                                           clear_pipe;
    logic                                           enable_pipe;
 
-   logic [$clog2(NB_BANKS)-1:0]                    fetch_dest_Q;         //Target BANK
+   if (NB_BANKS > 1) begin
+      logic [$clog2(NB_BANKS)-1:0]                 fetch_dest_Q;         //Target BANK
+   end
    logic [NB_WAYS-1:0][SCM_DATA_WIDTH-1:0]         DATA_read_rdata_int;
    logic [NB_WAYS-1:0][SCM_TAG_WIDTH-1:0]          TAG_read_rdata_int;
 
@@ -250,9 +252,14 @@ module icache_bank_mp_128
 
 
 
-   assign fetch_dest_Q        = fetch_addr_Q[$clog2(NB_BANKS)+OFFSET-1:OFFSET];
-   assign TAG_read_rdata_int  = TAG_read_rdata_i[fetch_dest_Q]  ;
-   assign DATA_read_rdata_int = DATA_read_rdata_i[fetch_dest_Q] ;
+   if (NB_BANKS > 1) begin
+      assign fetch_dest_Q        = fetch_addr_Q[$clog2(NB_BANKS)+OFFSET-1:OFFSET];
+      assign TAG_read_rdata_int  = TAG_read_rdata_i[fetch_dest_Q]  ;
+      assign DATA_read_rdata_int = DATA_read_rdata_i[fetch_dest_Q] ;
+   end else begin
+      assign TAG_read_rdata_int  = TAG_read_rdata_i;
+      assign DATA_read_rdata_int = DATA_read_rdata_i;
+   end
 
 
 
@@ -436,10 +443,18 @@ begin : Comb_logic_FSM
             enable_pipe          = fetch_req_i;  
             
             //Read the DATA nd TAG
-            TAG_read_req_o[fetch_addr_i[$clog2(NB_BANKS)-1+4:4]]  = fetch_req_i;
+            if (NB_BANKS > 1) begin
+               TAG_read_req_o[fetch_addr_i[$clog2(NB_BANKS)-1+4:4]] = fetch_req_i;
+            end else begin
+               TAG_read_req_o = fetch_req_i;
+            end
             TAG_read_addr_o = fetch_addr_i[SET_ID_MSB:SET_ID_LSB];
 
-            DATA_read_req_o[fetch_addr_i[$clog2(NB_BANKS)-1+4:4]]  = fetch_req_i;
+            if (NB_BANKS > 1) begin
+               DATA_read_req_o[fetch_addr_i[$clog2(NB_BANKS)-1+4:4]] = fetch_req_i;
+            end else begin
+               DATA_read_req_o = fetch_req_i;
+            end
             DATA_read_addr_o = fetch_addr_i[SET_ID_MSB:SET_ID_LSB];
 
             if(fetch_req_Q)
@@ -535,10 +550,18 @@ begin : Comb_logic_FSM
 
             fetch_rdata_o           = fetch_rdata_i;
 
-            TAG_read_req_o[fetch_addr_Q[$clog2(NB_BANKS)-1+4:4]]  = 1'b1;
+            if (NB_BANKS > 1) begin
+               TAG_read_req_o[fetch_addr_Q[$clog2(NB_BANKS)-1+4:4]] = 1'b1;
+            end else begin
+               TAG_read_req_o = 1'b1;
+            end
             TAG_read_addr_o = fetch_addr_Q[SET_ID_MSB:SET_ID_LSB];
 
-            DATA_read_req_o[fetch_addr_Q[$clog2(NB_BANKS)-1+4:4]]  = 1'b1;
+            if (NB_BANKS > 1) begin
+               DATA_read_req_o[fetch_addr_Q[$clog2(NB_BANKS)-1+4:4]] = 1'b1;
+            end else begin
+               DATA_read_req_o = 1'b1;
+            end
             DATA_read_addr_o = fetch_addr_Q[SET_ID_MSB:SET_ID_LSB];
 
          end
