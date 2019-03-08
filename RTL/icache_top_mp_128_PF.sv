@@ -46,22 +46,22 @@
 
 module icache_top_mp_128_PF
 #(
-   parameter FETCH_ADDR_WIDTH = 32,
-   parameter FETCH_DATA_WIDTH = 128,
+   parameter int    FETCH_ADDR_WIDTH  = 32,
+   parameter int    FETCH_DATA_WIDTH  = 128,
 
-   parameter NB_CORES         = 8,
-   parameter NB_BANKS         = 8,
-   parameter NB_WAYS          = 4,
-   parameter CACHE_SIZE       = 4096, // in Byte
-   parameter CACHE_LINE       = 1,    // in word of [FETCH_DATA_WIDTH]
+   parameter int    NB_CORES          = 8,
+   parameter int    NB_BANKS          = 8,
+   parameter int    NB_WAYS           = 4,
+   parameter int    CACHE_SIZE        = 4096, // in Byte
+   parameter int    CACHE_LINE        = 1,    // in word of [FETCH_DATA_WIDTH]
 
-   parameter AXI_ID           = 6,
-   parameter AXI_ADDR         = 32,
-   parameter AXI_USER         = 6,
-   parameter AXI_DATA         = 64,
+   parameter int    AXI_ID            = 6,
+   parameter int    AXI_ADDR          = 32,
+   parameter int    AXI_USER          = 6,
+   parameter int    AXI_DATA          = 64,
 
-   parameter USE_REDUCED_TAG  = "TRUE",   // TRUE | FALSE
-   parameter L2_SIZE          = 512*1024    // Size of max(L2 ,ROM) program memory in Byte
+   parameter string USE_REDUCED_TAG   = "TRUE",   // TRUE | FALSE
+   parameter int    L2_SIZE           = 512*1024    // Size of max(L2 ,ROM) program memory in Byte
 )
 (
    input logic                                           clk,
