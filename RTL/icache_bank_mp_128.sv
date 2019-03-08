@@ -47,28 +47,28 @@
 
 module icache_bank_mp_128
 #(
-   parameter FETCH_ADDR_WIDTH = 32,
-   parameter FETCH_DATA_WIDTH = 128,
+   parameter int FETCH_ADDR_WIDTH = 32,
+   parameter int FETCH_DATA_WIDTH = 128,
 
-   parameter NB_CORES        = 4,
-   parameter BANK_ID         = 0,
-   parameter NB_BANKS        = 4,
-   parameter NB_WAYS         = 4,
-   parameter CACHE_LINE      = 1,
+   parameter int NB_CORES         = 4,
+   parameter int BANK_ID          = 0,
+   parameter int NB_BANKS         = 4,
+   parameter int NB_WAYS          = 4,
+   parameter int CACHE_LINE       = 1,
 
-   parameter SCM_ADDR_WIDTH  = 16,
-   parameter SCM_TAG_WIDTH   = 6,
-   parameter SCM_DATA_WIDTH  = 128,
+   parameter int SCM_ADDR_WIDTH   = 16,
+   parameter int SCM_TAG_WIDTH    = 6,
+   parameter int SCM_DATA_WIDTH   = 128,
 
-   parameter SET_ID_LSB      = $clog2(NB_BANKS)+$clog2(SCM_DATA_WIDTH*CACHE_LINE)-3,
-   parameter SET_ID_MSB      = SET_ID_LSB + SCM_ADDR_WIDTH - 1,
-   parameter TAG_LSB         = SET_ID_MSB + 1,
-   parameter TAG_MSB         = TAG_LSB + SCM_TAG_WIDTH - 2,
+   parameter int SET_ID_LSB       = $clog2(NB_BANKS)+$clog2(SCM_DATA_WIDTH*CACHE_LINE)-3,
+   parameter int SET_ID_MSB       = SET_ID_LSB + SCM_ADDR_WIDTH - 1,
+   parameter int TAG_LSB          = SET_ID_MSB + 1,
+   parameter int TAG_MSB          = TAG_LSB + SCM_TAG_WIDTH - 2,
 
-   parameter AXI_ID          = 4,
-   parameter AXI_ADDR        = FETCH_ADDR_WIDTH,
-   parameter AXI_USER        = 6,
-   parameter AXI_DATA        = 64
+   parameter int AXI_ID           = 4,
+   parameter int AXI_ADDR         = FETCH_ADDR_WIDTH,
+   parameter int AXI_USER         = 6,
+   parameter int AXI_DATA         = 64
 )
 (
    input logic                                              clk,
