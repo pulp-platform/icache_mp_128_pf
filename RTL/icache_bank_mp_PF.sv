@@ -41,10 +41,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-
 `define USE_REQ_BUFFER
-`include "pulp_soc_defines.sv"
 
 module icache_bank_mp_128_PF
 #(
