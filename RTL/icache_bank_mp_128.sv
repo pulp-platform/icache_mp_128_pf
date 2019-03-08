@@ -41,9 +41,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 `define USE_REQ_BUFFER
-`include "pulp_soc_defines.sv"
 
 module icache_bank_mp_128
 #(
@@ -64,6 +62,8 @@ module icache_bank_mp_128
    parameter int SET_ID_MSB       = SET_ID_LSB + SCM_ADDR_WIDTH - 1,
    parameter int TAG_LSB          = SET_ID_MSB + 1,
    parameter int TAG_MSB          = TAG_LSB + SCM_TAG_WIDTH - 2,
+
+   parameter bit FEATURE_STAT     = 1'b0,
 
    parameter int AXI_ID           = 4,
    parameter int AXI_ADDR         = FETCH_ADDR_WIDTH,
@@ -110,15 +110,12 @@ module icache_bank_mp_128
    output logic [NB_WAYS-1:0]                               fetch_way_o,  
    input  logic                                             fetch_gnt_i,
    input  logic                                             fetch_rvalid_i,
-   input  logic [FETCH_DATA_WIDTH-1:0]                      fetch_rdata_i
-`ifdef FEATURE_ICACHE_STAT
-   ,
+   input  logic [FETCH_DATA_WIDTH-1:0]                      fetch_rdata_i,
    output logic [31:0]                                      ctrl_hit_count_icache_o,
    output logic [31:0]                                      ctrl_trans_count_icache_o,
    output logic [31:0]                                      ctrl_miss_count_icache_o,
    input  logic                                             ctrl_clear_regs_icache_i,
    input  logic                                             ctrl_enable_regs_icache_i
-`endif
 );
 
 
@@ -162,9 +159,7 @@ module icache_bank_mp_128
 
    logic      update_lfsr;
 
-`ifdef FEATURE_ICACHE_STAT  
    logic [31:0] Count_Evictions;
-`endif
 
    logic                                             fetch_req_int;
    logic [FETCH_ADDR_WIDTH-1:0]                      fetch_addr_int;
@@ -187,21 +182,21 @@ module icache_bank_mp_128
           fetch_req_Q               <= 1'b0;
           way_match_Q               <= '0;
           way_valid_Q               <= '0;
-`ifdef FEATURE_ICACHE_STAT          
-          ctrl_hit_count_icache_o   <= '0;
-          ctrl_trans_count_icache_o <= '0;
-          ctrl_miss_count_icache_o  <= '0;
-          Count_Evictions           <= '0;
-          ctrl_miss_count_icache_o  <= '0;
-`endif
+          if (FEATURE_STAT) begin
+            ctrl_hit_count_icache_o   <= '0;
+            ctrl_trans_count_icache_o <= '0;
+            ctrl_miss_count_icache_o  <= '0;
+            Count_Evictions           <= '0;
+            ctrl_miss_count_icache_o  <= '0;
+          end
       end 
       else 
       begin
-          CS <= NS;
-          PS <= CS;
+        CS <= NS;
+        PS <= CS;
 
 
-`ifdef FEATURE_ICACHE_STAT    
+        if (FEATURE_STAT) begin
           if(ctrl_clear_regs_icache_i)
           begin
               ctrl_hit_count_icache_o   <= '0;
@@ -226,7 +221,7 @@ module icache_bank_mp_128
                 ctrl_miss_count_icache_o<= ctrl_miss_count_icache_o + 1'b1;
 
             end
-`endif
+        end
 
           if(save_pipe_status)
           begin
