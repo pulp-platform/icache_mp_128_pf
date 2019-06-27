@@ -308,12 +308,14 @@ module cache_controller_to_axi_128_PF
    // ██║ ╚═╝ ██║██║  ██║██║██║ ╚████║███████╗╚██████╗╚██████╗ //
    // ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═════╝ //
    //////////////////////////////////////////////////////////////
+   localparam int unsigned CTRL_DEPTH = 16;
+   logic [$clog2(CTRL_DEPTH)-1:0] ctrl_axi_id_inp, ctrl_axi_id_oup;
    central_controller_128
    #(
       .ID_WIDTH       ( NB_CORES+1        ),
       .ADDR_WIDTH     ( FETCH_ADDR_WIDTH  ),
       .DATA_WIDTH     ( FETCH_DATA_WIDTH  ),
-      .DEPTH          ( 16                ),
+      .DEPTH          ( CTRL_DEPTH        ),
 
 
       .SCM_ADDR_WIDTH ( SCM_ADDR_WIDTH    ),
@@ -369,11 +371,11 @@ module cache_controller_to_axi_128_PF
 
       .AXI_req_o              ( axi_master_arvalid_o   ),
       .AXI_addr_o             ( axi_master_araddr_o    ),
-      .AXI_ID_o               ( axi_master_arid_o      ),
+      .AXI_ID_o               ( ctrl_axi_id_oup        ),
       .AXI_gnt_i              ( axi_master_arready_i   ),
 
       .AXI_rvalid_i           ( axi_master_rvalid_int  ),
-      .AXI_rID_i              ( axi_master_rid_int     ),
+      .AXI_rID_i              ( ctrl_axi_id_inp        ),
       .AXI_rdata_i            ( axi_master_rdata_int   ),
 
       // interface with WRITE PORT --> SCM Unified PORT
@@ -390,6 +392,11 @@ module cache_controller_to_axi_128_PF
       .SCM_DATA_write_wdata_o ( SCM_DATA_write_wdata_o ), 
       .SCM_DATA_write_way_o   ( SCM_DATA_write_way_o   )
    );
+   assign axi_master_arid_o = ctrl_axi_id_oup[AXI_ID-1:0];
+   always_comb begin
+     ctrl_axi_id_inp = '0;
+     ctrl_axi_id_inp[$high(axi_master_rid_i):0] = axi_master_rid_i;
+   end
 
    //always accept read data
    assign axi_master_rready_o   = 1'b1;
