@@ -417,96 +417,19 @@ module cache_controller_to_axi_128_PF
    /////////////////////////////////////////////////////////////////////////////////////////////////////////                                                                                                
    // AXI COMPACTOR 64 bit to 128 bit!!! Data comes back as 64 bit chunks.
    // This logic creates atomic responses (same with as the cache line size --> 128bit )
-   always_ff @(posedge clk, negedge rst_n) 
-   begin
-      if(~rst_n) 
-      begin
-         CS_COMP <= IDLE_COMP;
-         rel_chunk_CS <= '0;
 
-         axi_master_rdata_int   <= '0;
-         axi_master_rid_int     <= '0;
-      end 
-      else 
-      begin
-         CS_COMP <= NS_COMP;
-         rel_chunk_CS <= rel_chunk_NS;
+   // Read responses may be interleaved so allocate storage for the first 64 bit portion of each
+   logic [63:0] rdata_low [0:(AXI_ID**2)-1];
 
-         if(sample_rdata)
-         begin
-            axi_master_rdata_int[rel_chunk_CS] <= axi_master_rdata_i;
-            axi_master_rid_int                 <= axi_master_rid_i;
-         end
-
+   always_ff @(posedge clk) begin
+      if (axi_master_rvalid_i && !axi_master_rlast_i) begin
+         rdata_low[axi_master_rid_i] <= axi_master_rdata_i;
       end
    end
 
-   assign sample_rdata          = axi_master_rvalid_i;
-
-   always_comb 
-   begin
-      rel_chunk_NS        = rel_chunk_CS;
-      NS_COMP             = CS_COMP;
-
-      case (CS_COMP)
-         IDLE_COMP: 
-         begin
-            axi_master_rvalid_int = 1'b0;
-
-            if(axi_master_rvalid_i)
-            begin
-               if(axi_master_rlast_i)
-               begin
-                  NS_COMP = DISP_COMP;
-                  rel_chunk_NS = '0;
-               end
-               else
-               begin
-                  NS_COMP = IDLE_COMP;
-                  rel_chunk_NS = rel_chunk_CS + 1'b1;
-               end
-            end
-            else
-            begin
-               NS_COMP = IDLE_COMP;
-               rel_chunk_NS = rel_chunk_CS;
-            end
-
-         end
-
-         DISP_COMP: 
-         begin
-            axi_master_rvalid_int = 1'b1;
-            NS_COMP = IDLE_COMP;
-
-            if(axi_master_rvalid_i)
-            begin
-               if(axi_master_rlast_i)
-               begin
-                  NS_COMP = DISP_COMP;
-                  rel_chunk_NS = '0;
-               end
-               else
-               begin
-                  NS_COMP = IDLE_COMP;
-                  rel_chunk_NS = 1;  
-               end
-            end
-            else
-            begin
-               NS_COMP = IDLE_COMP;
-               rel_chunk_NS = '0;
-            end
-         end
-
-         default: 
-         begin
-            NS_COMP = IDLE_COMP;
-         end
-      endcase
-   
-   end
-
-
+   assign axi_master_rdata_int[63:0]   = rdata_low[axi_master_rid_i];
+   assign axi_master_rdata_int[127:64] = axi_master_rdata_i;
+   assign axi_master_rid_int           = axi_master_rid_i;
+   assign axi_master_rvalid_int        = axi_master_rvalid_i && !axi_master_rlast_i;
 
 endmodule
