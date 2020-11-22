@@ -427,9 +427,9 @@ module cache_controller_to_axi_128_PF
       end
    end
 
-   assign axi_master_rdata_int[63:0]   = rdata_low[axi_master_rid_i];
-   assign axi_master_rdata_int[127:64] = axi_master_rdata_i;
-   assign axi_master_rid_int           = axi_master_rid_i;
-   assign axi_master_rvalid_int        = axi_master_rvalid_i && axi_master_rlast_i;
+   assign axi_master_rdata_int[0][63:0] = rdata_low[axi_master_rid_i];
+   assign axi_master_rdata_int[1][63:0] = axi_master_rdata_i;
+   assign axi_master_rid_int            = axi_master_rid_i;
+   assign axi_master_rvalid_int         = axi_master_rvalid_i && axi_master_rlast_i;
 
 endmodule
