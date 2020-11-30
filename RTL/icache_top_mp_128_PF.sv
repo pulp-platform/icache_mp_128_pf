@@ -40,28 +40,28 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 `define  USE_AXI_SLICES
-`include "pulp_soc_defines.sv"
 
 module icache_top_mp_128_PF
 #(
-   parameter FETCH_ADDR_WIDTH = 32,
-   parameter FETCH_DATA_WIDTH = 128,
+   parameter int    FETCH_ADDR_WIDTH  = 32,
+   parameter int    FETCH_DATA_WIDTH  = 128,
 
-   parameter NB_CORES         = 8,
-   parameter NB_BANKS         = 8,
-   parameter NB_WAYS          = 4,
-   parameter CACHE_SIZE       = 4096, // in Byte
-   parameter CACHE_LINE       = 1,    // in word of [FETCH_DATA_WIDTH]
+   parameter int    NB_CORES          = 8,
+   parameter int    NB_BANKS          = 8,
+   parameter int    NB_WAYS           = 4,
+   parameter int    CACHE_SIZE        = 4096, // in Byte
+   parameter int    CACHE_LINE        = 1,    // in word of [FETCH_DATA_WIDTH]
 
-   parameter AXI_ID           = 6,
-   parameter AXI_ADDR         = 32,
-   parameter AXI_USER         = 6,
-   parameter AXI_DATA         = 64,
+   parameter bit    FEATURE_STAT      = 1'b0,
 
-   parameter USE_REDUCED_TAG  = "TRUE",   // TRUE | FALSE
-   parameter L2_SIZE          = 512*1024    // Size of max(L2 ,ROM) program memory in Byte
+   parameter int    AXI_ID            = 6,
+   parameter int    AXI_ADDR          = 32,
+   parameter int    AXI_USER          = 6,
+   parameter int    AXI_DATA          = 64,
+
+   parameter string USE_REDUCED_TAG   = "TRUE",   // TRUE | FALSE
+   parameter int    L2_SIZE           = 512*1024    // Size of max(L2 ,ROM) program memory in Byte
 )
 (
    input logic                                           clk,
@@ -261,7 +261,6 @@ module icache_top_mp_128_PF
 
 
    // Performamce counters
-`ifdef FEATURE_ICACHE_STAT
    logic               [31:0]   total_hit_count;
    logic               [31:0]   total_trans_count;
    logic               [31:0]   total_miss_count;
@@ -269,7 +268,6 @@ module icache_top_mp_128_PF
    logic [NB_CORES-1:0][31:0]   bank_hit_count;
    logic [NB_CORES-1:0][31:0]   bank_trans_count;
    logic [NB_CORES-1:0][31:0]   bank_miss_count;
-`endif
 
    assign SCM_TAG_write_dest_OH_int  = (1 << SCM_TAG_write_dest_int);
    assign SCM_DATA_write_dest_OH_int = (1 << SCM_DATA_write_dest_int);
@@ -287,45 +285,42 @@ module icache_top_mp_128_PF
    assign sel_flush_addr                       = IC_ctrl_unit_slave_if.sel_flush_addr;
    assign IC_ctrl_unit_slave_if.sel_flush_ack  = sel_flush_ack;
 
+  // Performamce counters
+  if (FEATURE_STAT) begin
+    assign IC_ctrl_unit_slave_if.global_hit_count   = total_hit_count;
+    assign IC_ctrl_unit_slave_if.global_trans_count = total_trans_count;
+    assign IC_ctrl_unit_slave_if.global_miss_count  = total_miss_count;
 
+    always_comb
+    begin
+        total_hit_count   = '0;
+        total_trans_count = '0;
+        for (index=0; index<NB_CORES; index++)
+        begin
+          total_hit_count   = total_hit_count   + bank_hit_count[index];
+          total_trans_count = total_trans_count + bank_trans_count[index];
 
-   // Performamce counters
-`ifdef FEATURE_ICACHE_STAT
-   assign IC_ctrl_unit_slave_if.global_hit_count   = total_hit_count;
-   assign IC_ctrl_unit_slave_if.global_trans_count = total_trans_count;
-   assign IC_ctrl_unit_slave_if.global_miss_count  = total_miss_count;
+          IC_ctrl_unit_slave_if.bank_hit_count   [index]  = bank_hit_count   [index];
+          IC_ctrl_unit_slave_if.bank_trans_count [index]  = bank_trans_count [index];
+          IC_ctrl_unit_slave_if.bank_miss_count  [index]  = bank_miss_count  [index];
+        end
+    end
 
-   always_comb
-   begin
-      total_hit_count   = '0;
-      total_trans_count = '0;
-      for (index=0; index<NB_CORES; index++)
-      begin
-         total_hit_count   = total_hit_count   + bank_hit_count[index];
-         total_trans_count = total_trans_count + bank_trans_count[index];
-
-         IC_ctrl_unit_slave_if.bank_hit_count   [index]  = bank_hit_count   [index];
-         IC_ctrl_unit_slave_if.bank_trans_count [index]  = bank_trans_count [index];
-         IC_ctrl_unit_slave_if.bank_miss_count  [index]  = bank_miss_count  [index];         
-      end
-   end
-
-   always_ff @(posedge clk, negedge rst_n) 
-   begin
-      if(~rst_n)
-      begin
-          total_miss_count <= 0;
-      end 
-      else 
-      begin
-         if(IC_ctrl_unit_slave_if.ctrl_clear_regs)
-           total_miss_count <= '0;
-         else  if(IC_ctrl_unit_slave_if.ctrl_enable_regs & axi_master_arvalid_int & axi_master_arready_int )
-                     total_miss_count <= total_miss_count + 1'b1;
-      end
-   end
-
-`endif
+    always_ff @(posedge clk, negedge rst_n)
+    begin
+        if(~rst_n)
+        begin
+            total_miss_count <= 0;
+        end
+        else
+        begin
+          if(IC_ctrl_unit_slave_if.ctrl_clear_regs)
+            total_miss_count <= '0;
+          else  if(IC_ctrl_unit_slave_if.ctrl_enable_regs & axi_master_arvalid_int & axi_master_arready_int )
+                      total_miss_count <= total_miss_count + 1'b1;
+        end
+    end
+  end
 
    ///////////////////////////////////////////////////////////////////////////////
    // ██████╗ ██████╗ ██╗██╗   ██╗ █████╗ ████████╗███████╗     ██████╗ ██████╗ //
@@ -400,15 +395,12 @@ module icache_top_mp_128_PF
            
             .fetch_gnt_i                ( fetch_gnt_int[i]                         ),
             .fetch_rvalid_i             ( fetch_rvalid_int[i]                      ),
-            .fetch_rdata_i              ( fetch_rdata_int[i]                       )
-`ifdef FEATURE_ICACHE_STAT
-         ,
-         .ctrl_hit_count_icache_o       ( bank_hit_count[i]                        ),
-         .ctrl_trans_count_icache_o     ( bank_trans_count[i]                      ),
-         .ctrl_miss_count_icache_o      ( bank_miss_count[i]                       ),
-         .ctrl_clear_regs_icache_i      ( IC_ctrl_unit_slave_if.ctrl_clear_regs    ),
-         .ctrl_enable_regs_icache_i     ( IC_ctrl_unit_slave_if.ctrl_enable_regs   )
-`endif
+            .fetch_rdata_i              ( fetch_rdata_int[i]                       ),
+            .ctrl_hit_count_icache_o    ( bank_hit_count[i]                        ),
+            .ctrl_trans_count_icache_o  ( bank_trans_count[i]                      ),
+            .ctrl_miss_count_icache_o   ( bank_miss_count[i]                       ),
+            .ctrl_clear_regs_icache_i   ( IC_ctrl_unit_slave_if.ctrl_clear_regs    ),
+            .ctrl_enable_regs_icache_i  ( IC_ctrl_unit_slave_if.ctrl_enable_regs   )
          );
       end
 
