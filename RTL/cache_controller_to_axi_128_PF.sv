@@ -427,9 +427,15 @@ module cache_controller_to_axi_128_PF
       end
    end
 
-   assign axi_master_rdata_int[0][63:0] = rdata_low[axi_master_rid_i];
-   assign axi_master_rdata_int[1][63:0] = axi_master_rdata_i;
-   assign axi_master_rid_int            = axi_master_rid_i;
-   assign axi_master_rvalid_int         = axi_master_rvalid_i && axi_master_rlast_i;
+   always_ff @(posedge clk) begin
+      if (axi_master_rvalid_i && axi_master_rlast_i) begin
+	 axi_master_rdata_int[0][63:0] <= rdata_low[axi_master_rid_i];
+	 axi_master_rdata_int[1][63:0] <= axi_master_rdata_i;
+	 axi_master_rid_int            <= axi_master_rid_i;
+	 axi_master_rvalid_int         <= 1'b1;
+      end else begin
+	 axi_master_rvalid_int         <= 1'b0;
+      end
+   end
 
 endmodule
