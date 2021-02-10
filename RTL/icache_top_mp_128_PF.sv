@@ -60,7 +60,7 @@ module icache_top_mp_128_PF
    parameter int    AXI_USER          = 6,
    parameter int    AXI_DATA          = 64,
 
-   parameter string USE_REDUCED_TAG   = "TRUE",   // TRUE | FALSE
+   parameter        USE_REDUCED_TAG   = "TRUE",   // TRUE | FALSE
    parameter int    L2_SIZE           = 512*1024    // Size of max(L2 ,ROM) program memory in Byte
 )
 (
