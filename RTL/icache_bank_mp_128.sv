@@ -603,8 +603,8 @@ end
 
    end
 
-   // Logic to generate the binary representation of one hot signals
-   onehot_to_bin #( .ONEHOT_WIDTH(NB_WAYS) ) WAY_MATCH_BIN (.onehot(way_match), .bin(way_match_bin[ $clog2(NB_WAYS)-1:0]) );
+   // Logic to generate the binary representation for way_match_bin
+   assign way_match_bin[$clog2(NB_WAYS)-1:0] = HIT_WAY;
    assign way_match_bin[NB_WAYS-1:$clog2(NB_WAYS)] = 0;
 
 endmodule // icache_top
